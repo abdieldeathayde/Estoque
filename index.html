@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Estoque</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Animation for modal */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-animation {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Custom checkbox */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .custom-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .custom-checkbox:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 14px;
+            left: 3px;
+            top: -1px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-boxes mr-2 text-blue-500"></i>
+                    Gestão de Estoque
+                </h1>
+                <button id="addProductBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
+                    <i class="fas fa-plus mr-2"></i>
+                    Adicionar Produto
+                </button>
+            </div>
+            <p class="text-gray-600 mt-2">Gerencie seu estoque de forma eficiente</p>
+        </header>
+
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="relative flex-grow">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar produtos..." class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center">
+                        <label for="lowStockFilter" class="mr-2 text-gray-700">Baixo estoque</label>
+                        <input type="checkbox" id="lowStockFilter" class="custom-checkbox">
+                    </div>
+                    <div>
+                        <select id="sortSelect" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="id">Ordenar por ID</option>
+                            <option value="name">Ordenar por Nome</option>
+                            <option value="quantity">Ordenar por Quantidade</option>
+                            <option value="price">Ordenar por Preço</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Total de Produtos</p>
+                        <h3 class="text-2xl font-bold" id="totalProducts">0</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-box text-blue-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Valor Total</p>
+                        <h3 class="text-2xl font-bold" id="totalValue">R$ 0,00</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Produtos em Estoque</p>
+                        <h3 class="text-2xl font-bold" id="inStockProducts">0</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <i class="fas fa-check-circle text-purple-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500">Produtos em Falta</p>
+                        <h3 class="text-2xl font-bold" id="outOfStockProducts">0</h3>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unitário</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Products will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyState" class="p-8 text-center hidden">
+                <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900">Nenhum produto encontrado</h3>
+                <p class="mt-1 text-sm text-gray-500">Adicione seu primeiro produto clicando no botão acima.</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-4">
+            <div class="text-sm text-gray-500">
+                Mostrando <span id="showingFrom">0</span> a <span id="showingTo">0</span> de <span id="totalItems">0</span> produtos
+            </div>
+            <div class="flex gap-2">
+                <button id="prevPage" class="px-3 py-1 border rounded-lg disabled:opacity-50" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="pageNumbers" class="flex gap-1"></div>
+                <button id="nextPage" class="px-3 py-1 border rounded-lg disabled:opacity-50" disabled>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal-animation">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold" id="modalTitle">Adicionar Produto</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="mb-4">
+                        <label for="productDescription" class="block text-sm font-medium text-gray-700 mb-1">Descrição*</label>
+                        <input type="text" id="productDescription" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="productQuantity" class="block text-sm font-medium text-gray-700 mb-1">Quantidade*</label>
+                            <input type="number" id="productQuantity" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="productPrice" class="block text-sm font-medium text-gray-700 mb-1">Preço Unitário (R$)*</label>
+                            <input type="number" id="productPrice" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end gap-3 border-t px-6 py-4">
+                <button id="cancelModal" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button id="saveProduct" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md modal-animation">
+            <div class="flex justify-between items-center border-b px-6 py-4">
+                <h3 class="text-lg font-semibold">Confirmar Exclusão</h3>
+                <button id="closeDeleteModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                    </div>
+                </div>
+                <p class="text-center text-gray-700">Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.</p>
+                <input type="hidden" id="productIdToDelete">
+            </div>
+            <div class="flex justify-end gap-3 border-t px-6 py-4">
+                <button id="cancelDelete" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - in a real app, this would come from an API
+        let products = [
+            { id: 1, description: "Notebook Dell Inspiron", quantity: 15, price: 4299.99 },
+            { id: 2, description: "Mouse sem fio Logitech", quantity: 42, price: 129.90 },
+            { id: 3, description: "Teclado mecânico RGB", quantity: 8, price: 349.90 },
+            { id: 4, description: "Monitor 24\" Full HD", quantity: 12, price: 899.00 },
+            { id: 5, description: "Webcam HD 1080p", quantity: 0, price: 249.90 },
+            { id: 6, description: "Headphone Bluetooth", quantity: 25, price: 199.00 },
+            { id: 7, description: "SSD 500GB", quantity: 18, price: 399.90 },
+            { id: 8, description: "Cadeira Gamer", quantity: 5, price: 1299.90 },
+            { id: 9, description: "Mesa digitalizadora", quantity: 3, price: 599.00 },
+            { id: 10, description: "Hub USB-C", quantity: 30, price: 89.90 },
+        ];
+
+        // DOM Elements
+        const productsTableBody = document.getElementById('productsTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const lowStockFilter = document.getElementById('lowStockFilter');
+        const sortSelect = document.getElementById('sortSelect');
+        const addProductBtn = document.getElementById('addProductBtn');
+        const productModal = document.getElementById('productModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const productForm = document.getElementById('productForm');
+        const saveProductBtn = document.getElementById('saveProduct');
+        const cancelModalBtn = document.getElementById('cancelModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        const cancelDeleteBtn = document.getElementById('cancelDelete');
+        const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+        const productIdInput = document.getElementById('productId');
+        const productIdToDelete = document.getElementById('productIdToDelete');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        const showingFrom = document.getElementById('showingFrom');
+        const showingTo = document.getElementById('showingTo');
+        const totalItems = document.getElementById('totalItems');
+        const totalProductsEl = document.getElementById('totalProducts');
+        const totalValueEl = document.getElementById('totalValue');
+        const inStockProductsEl = document.getElementById('inStockProducts');
+        const outOfStockProductsEl = document.getElementById('outOfStockProducts');
+
+        // Pagination variables
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let totalPages = Math.ceil(products.length / itemsPerPage);
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProducts();
+            updateStats();
+            renderPagination();
+            
+            // Event listeners
+            addProductBtn.addEventListener('click', openAddModal);
+            saveProductBtn.addEventListener('click', saveProduct);
+            cancelModalBtn.addEventListener('click', closeModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            confirmDeleteBtn.addEventListener('click', deleteProduct);
+            cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+            closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+            searchInput.addEventListener('input', filterProducts);
+            lowStockFilter.addEventListener('change', filterProducts);
+            sortSelect.addEventListener('change', filterProducts);
+            prevPageBtn.addEventListener('click', goToPrevPage);
+            nextPageBtn.addEventListener('click', goToNextPage);
+        });
+
+        // Render products table
+        function renderProducts(filteredProducts = products) {
+            productsTableBody.innerHTML = '';
+            
+            if (filteredProducts.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredProducts.length);
+            const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+            
+            showingFrom.textContent = startIndex + 1;
+            showingTo.textContent = endIndex;
+            totalItems.textContent = filteredProducts.length;
+            
+            paginatedProducts.forEach(product => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const totalValue = product.quantity * product.price;
+                const isLowStock = product.quantity > 0 && product.quantity <= 5;
+                const isOutOfStock = product.quantity === 0;
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isOutOfStock ? 'bg-red-100 text-red-800' : isLowStock ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                            ${product.quantity}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ ${product.price.toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">R$ ${totalValue.toFixed(2).replace('.', ',')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div class="flex gap-2">
+                            <button class="edit-btn text-blue-500 hover:text-blue-700" data-id="${product.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn text-red-500 hover:text-red-700" data-id="${product.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                productsTableBody.appendChild(row);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = parseInt(e.currentTarget.getAttribute('data-id'));
+                    openEditModal(productId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = parseInt(e.currentTarget.getAttribute('data-id'));
+                    openDeleteModal(productId);
+                });
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalProducts = products.length;
+            const totalValue = products.reduce((sum, product) => sum + (product.quantity * product.price), 0);
+            const inStockProducts = products.filter(p => p.quantity > 0).length;
+            const outOfStockProducts = products.filter(p => p.quantity === 0).length;
+            
+            totalProductsEl.textContent = totalProducts;
+            totalValueEl.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
+            inStockProductsEl.textContent = inStockProducts;
+            outOfStockProductsEl.textContent = outOfStockProducts;
+        }
+
+        // Filter and sort products
+        function filterProducts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const sortBy = sortSelect.value;
+            const showLowStock = lowStockFilter.checked;
+            
+            let filtered = products.filter(product => 
+                product.description.toLowerCase().includes(searchTerm) || 
+                product.id.toString().includes(searchTerm)
+            );
+            
+            if (showLowStock) {
+                filtered = filtered.filter(product => product.quantity > 0 && product.quantity <= 5);
+            }
+            
+            // Sorting
+            filtered.sort((a, b) => {
+                if (sortBy === 'id') return a.id - b.id;
+                if (sortBy === 'name') return a.description.localeCompare(b.description);
+                if (sortBy === 'quantity') return a.quantity - b.quantity;
+                if (sortBy === 'price') return a.price - b.price;
+                return 0;
+            });
+            
+            totalPages = Math.ceil(filtered.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+            
+            renderProducts(filtered);
+            renderPagination();
+        }
+
+        // Pagination functions
+        function renderPagination() {
+            pageNumbersContainer.innerHTML = '';
+            
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            
+            if (totalPages === 0) return;
+            
+            // Always show first page
+            addPageNumber(1);
+            
+            // Show ellipsis if needed
+            if (currentPage > 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-3 py-1';
+                ellipsis.textContent = '...';
+                pageNumbersContainer.appendChild(ellipsis);
+            }
+            
+            // Show current page and neighbors
+            const startPage = Math.max(2, currentPage - 1);
+            const endPage = Math.min(totalPages - 1, currentPage + 1);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                addPageNumber(i);
+            }
+            
+            // Show ellipsis if needed
+            if (currentPage < totalPages - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-3 py-1';
+                ellipsis.textContent = '...';
+                pageNumbersContainer.appendChild(ellipsis);
+            }
+            
+            // Always show last page if different from first
+            if (totalPages > 1) {
+                addPageNumber(totalPages);
+            }
+        }
+        
+        function addPageNumber(page) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `px-3 py-1 rounded-lg ${currentPage === page ? 'bg-blue-500 text-white' : 'border border-gray-300 hover:bg-gray-100'}`;
+            pageBtn.textContent = page;
+            pageBtn.addEventListener('click', () => {
+                currentPage = page;
+                filterProducts();
+            });
+            pageNumbersContainer.appendChild(pageBtn);
+        }
+        
+        function goToPrevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                filterProducts();
+            }
+        }
+        
+        function goToNextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                filterProducts();
+            }
+        }
+
+        // Modal functions
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Adicionar Produto';
+            productIdInput.value = '';
+            productForm.reset();
+            productModal.classList.remove('hidden');
+        }
+        
+        function openEditModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            document.getElementById('modalTitle').textContent = 'Editar Produto';
+            productIdInput.value = product.id;
+            document.getElementById('productDescription').value = product.description;
+            document.getElementById('productQuantity').value = product.quantity;
+            document.getElementById('productPrice').value = product.price;
+            productModal.classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            productModal.classList.add('hidden');
+        }
+        
+        function openDeleteModal(productId) {
+            productIdToDelete.value = productId;
+            deleteModal.classList.remove('hidden');
+        }
+        
+        function closeDeleteModal() {
+            deleteModal.classList.add('hidden');
+        }
+        
+        // CRUD operations
+        function saveProduct() {
+            if (!productForm.checkValidity()) {
+                productForm.reportValidity();
+                return;
+            }
+            
+            const id = productIdInput.value ? parseInt(productIdInput.value) : 0;
+            const description = document.getElementById('productDescription').value;
+            const quantity = parseInt(document.getElementById('productQuantity').value);
+            const price = parseFloat(document.getElementById('productPrice').value);
+            
+            if (id) {
+                // Edit existing product
+                const index = products.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    products[index] = { id, description, quantity, price };
+                }
+            } else {
+                // Add new product
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({ id: newId, description, quantity, price });
+            }
+            
+            closeModal();
+            filterProducts();
+            updateStats();
+        }
+        
+        function deleteProduct() {
+            const productId = parseInt(productIdToDelete.value);
+            products = products.filter(p => p.id !== productId);
+            
+            closeDeleteModal();
+            filterProducts();
+            updateStats();
+        }
+    </script>
+</body>
+</html>

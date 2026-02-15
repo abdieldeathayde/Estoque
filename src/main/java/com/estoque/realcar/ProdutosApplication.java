@@ -59,3 +59,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 }
 
+2026-02-15T11:21:39.197-03:00 DEBUG 17804 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Failed to complete request: org.springframework.security.authentication.BadCredentialsException: Usuário inexistente ou senha inválida
+2026-02-15T11:21:39.224-03:00 DEBUG 17804 --- [nio-8080-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+
+

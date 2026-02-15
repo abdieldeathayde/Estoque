@@ -6,6 +6,9 @@ import com.estoque.realcar.dto.ProdutoRequestDTO;
 import com.estoque.realcar.dto.ProdutoResponseDTO;
 import jakarta.validation.Valid;
 
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,31 +33,31 @@ public class ProdutoController {
         this.excelImportService = excelImportService;
     }
 
-    // @CrossOrigin(origins = "*")
-    // @RestController
-    // public class ImportacaoController {
-    //     @PostMapping("/importar")
-    //     public ResponseEntity<String> importar(@RequestParam("file") MultipartFile file) {
-    //          // processamento...
-    //        return ResponseEntity.ok("Importação concluída!");
-    //     }
-    // }
+     @CrossOrigin(origins = "*")
+     @RestController
+     public class ImportacaoController {
+         @PostMapping("/importar")
+         public ResponseEntity<String> importar(@RequestParam("file") MultipartFile file) {
+              // processamento...
+            return ResponseEntity.ok("Importação concluída!");
+         }
+     }
 
 
 
-    // @PostMapping("/importar")
-    // public ResponseEntity<String> importar(@RequestParam("file") MultipartFile file) {
-    //     try {
-    //         // Ler o arquivo com Apache POI
-    //         Workbook workbook = new XSSFWorkbook(file.getInputStream());
-    //         Sheet sheet = workbook.getSheetAt(0);
-    //         // processar dados...
-    //         return ResponseEntity.ok("Importação concluída!");
-    //     } catch (Exception e) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-    //                             .body("Erro ao processar arquivo: " + e.getMessage());
-    //     }
-    // }
+     @PostMapping("/importar")
+     public ResponseEntity<String> importar(@RequestParam("file") MultipartFile file) {
+         try {
+             // Ler o arquivo com Apache POI
+             Workbook workbook = new XSSFWorkbook(file.getInputStream());
+             Sheet sheet = workbook.getSheetAt(0);
+             // processar dados...
+             return ResponseEntity.ok("Importação concluída!");
+         } catch (Exception e) {
+             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                 .body("Erro ao processar arquivo: " + e.getMessage());
+         }
+     }
 
 
     @GetMapping

@@ -1,4 +1,4 @@
-package com.estoque.realcar.auth;
+package com.estoque.realcar.auth.request;
 
 import lombok.Data;
 

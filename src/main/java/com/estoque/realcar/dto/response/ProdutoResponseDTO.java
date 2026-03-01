@@ -1,4 +1,4 @@
-package com.estoque.realcar.dto;
+package com.estoque.realcar.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

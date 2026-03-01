@@ -1,4 +1,4 @@
-package com.estoque.realcar.dto;
+package com.estoque.realcar.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package com.estoque.realcar.service.exception;
+package com.estoque.realcar.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
